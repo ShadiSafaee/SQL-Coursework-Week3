@@ -61,4 +61,27 @@ app.get("/customers/:cusId", async (req, res) => {
   const result = await pool.query(selectQuery, [productId]);
   res.json(result.rows);
 });
+
+app.post("/customers", async (req, res) => {
+  const { name, address, city, country } = req.body;
+  const insertQuery =
+    "INSERT INTO customers (name, address, city, country) VALUES ($1, $2, $3, $4)";
+  const customerQuery = "SELECT * FROM customers WHERE name=$1";
+  if (!name || !address || !city || !country) {
+    return res.status(400).send("please enter all the fields");
+  }
+  pool.query(customerQuery, [name]).then((result) => {
+    if (result.rows.length > 0) {
+      return res.status(400).send("customer with this detail already exists!");
+    } else {
+      pool
+        .query(insertQuery, [name, address, city, country])
+        .then(() => res.send("customer added successfully"))
+        .catch((err) => {
+          console.error(error);
+          res.status(500).json(error);
+        });
+    }
+  });
+});
 app.listen(PORT, () => console.log(`App is running on ${PORT}`));
